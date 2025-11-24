@@ -2,6 +2,7 @@
 #include <Wire.h>
 #include <MPU6050.h>
 #include <Servo.h>
+#include <kalman.h>
 
 MPU6050 mpu;
 SERVO balanceServo;
@@ -23,6 +24,9 @@ float dt;
 
 #define SERVO_PIN 18
 
+Kalman1D kalmanX(0.05, 0.02, 0.0); // tunable
+Kalman1D kalmanY(0.05, 0.02, 0.0); // tunable
+
 void moveServo(float correction) {
   int servoAngle = 90 - correction;
   servoAngle = constrain(servoAngle, 0, 180);
@@ -31,15 +35,20 @@ void moveServo(float correction) {
 
 float getAngle() {
   static float angleFiltered = 0;
+  mpu.read_raw_data();
+  mpu.convert_data();
 
-  float accelX = mpu.get_accel_x();
   float accelY = mpu.get_accel_y();
   float accelZ = mpu.get_accel_z();
+  
+  // pake z sama y karna rotasi atas-bawah (z) dan kiri-kanan (y)
+  float kz = kalmanX.update(accelZ);
+  float ky = kalmanY.update(accelY);
 
-  float accelAngle = atan2(accelY, accelZ) * 180.0 / PI;
+  float accelAngle = atan2(ky, kz) * 180.0 / PI;
 
+  // nilai alfa 90%
   angleFiltered = 0.90 * (angleFiltered) + 0.12 * accelAngle;
-  // angleFiltered = 0.90 * (angleFiltered + gyroY * dt) + 0.12 * accelAngle;
   
   return angleFiltered;
 }
@@ -48,6 +57,7 @@ void setup() {
   Serial.begin(115200);
   Wire.begin();
 
+  mpu.initMPU();
   balanceServo.initServo(SERVO_PIN);
   balanceServo.writeAngle(90);
 

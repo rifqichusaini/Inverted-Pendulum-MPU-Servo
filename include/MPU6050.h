@@ -1,3 +1,4 @@
+#pragma once
 #include <Arduino.h>
 #include <Wire.h>
 
@@ -11,12 +12,25 @@ class MPU6050{
     int16_t temp;
     int16_t gyro_x, gyro_y, gyro_z;
 
+  public:
     float accel_x_v, accel_y_v, accel_z_v;
     float temp_v;
     float gyro_x_v, gyro_y_v, gyro_z_v;
-  public:
+    
     float get_accel_y(){
       return accel_y_v;
+    }
+    float get_accel_x(){
+      return accel_x_v;
+    }
+    float get_accel_z(){
+      return accel_z_v;
+    }
+    float get_gyro_x(){
+      return gyro_x_v;
+    }
+    float get_gyro_y(){
+      return gyro_y_v;
     }
 
     void print_data(){
